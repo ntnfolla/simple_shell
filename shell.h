@@ -10,40 +10,88 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <wait.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <signal.h>
 
+#define BUFSIZE 1024
+extern char **environ;
+
 /**
- * struct list - linked list for environmental variables
- * @var: holds environmental variable string
+ * struct builtin_commands - stuct for function pointers to builtin commands
+ * @cmd_str: commands (env, cd, alias, history)
+ * @fun: function
+ */
+typedef struct builtin_commands
+{
+char *cmd_str;
+int (*fun)();
+} builtin_t;
+
+
+/**
+ * struct env_path - linked list for environmental variables
+ * @str: holds environmental variable string
+ * @len: holds the length of the string
  * @next: points to next node
  */
-typedef struct list
+typedef struct env_path
 {
-char *var;
-struct list *next;
+char *str;
+unsigned int len;
+struct env_path *next;
 
 } list_t;
 
-#define MAXARGS 128 /* maxargs in struct can't be variable, use define */
+/* In builtin.c */
+int (*_builtin(char *cmd))();
+int _exit_builtin(char **tokens, list_t *linkedlist_path, char *buffer);
+int _cd(char **tokens);
+int _alias(void);
+int _history(void);
 
-struct command{
-int argc; /* number of args */
-char *argv[MAXARGS]; /* arguments list */
-enum built_t{ /* is argv[0] a builtin command? */
-NONE, QUIT, JOBS, BG, FG
-} builtin;
-};
+/* env_func.c */
+char *_getenv(char *name);
+int _setenv(char **tokens);
+int _unsetenv(char **tokens);
+int current_env(char **tokens, list_t *environment);
 
-char *_getenv(const char *name);
-void eval(char *cmdline);
-int parse(const char *cmdline, struct command *cmd);
-void runSystemCommand(struct command *cmd, int bg);
-list_t *env_linked_list(char **env);
-list_t *add_end_node(list_t **head, char *str);
-size_t print_list(list_t *h);
-int delete_nodeint_at_index(list_t **head, int index);
-void free_linked_list(list_t *list);
+/* linkedlist.c */
+list_t *add_node(list_t **head, char *str, unsigned int len);
+list_t *path_list(void);
+list_t *environ_list(void);
+char *_which(char *cmd, list_t *linkedlist_path);
+void free_list(list_t *head);
+
+/* execute.c */
+void execute(char *argv[], list_t *linkedlist_path);
+char **split_line(char *line);
+
+/* memory.c */
+void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
+void free_double_ptr(char **str);
+void __exit(char **str, list_t *env);
+
+/* strings2.c*/
+char *_strcpy(char *dest, char *src);
+int _putchar(char c);
+void _puts(char *str);
+int _isnumber(int c);
+int _strlen(char *s);
+
+/* strtok.c */
+char *_strchr(char *s, char c);
+unsigned int _strspn(char *s, char *accept);
+char *_strpbrk(char *s, char *delims);
+char *_strtok(char *s, char *delim);
+
+/* string1.c */
+int _strcmp(char *s1, char *s2);
+int _strncmp(char *s1, char *s2, size_t bytes);
+char *_strcat(char *dest, char *src);
+char *_strdup(char *src);
+int _atoi(char *s);
+
 
 #endif
